@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { exec } = require("child_process");
+const youtubedl = require("yt-dlp-exec");
 
 const app = express();
 app.use(cors());
@@ -10,34 +10,28 @@ app.get("/", (req, res) => {
   res.send("API WORKING 🚀");
 });
 
-// ✅ MAIN API
-app.post("/api", (req, res) => {
-  const url = req.body.url;
+app.post("/api", async (req, res) => {
+  try {
+    const { url } = req.body;
 
-  if (!url) {
-    return res.json({ status: false, msg: "No URL" });
-  }
-
-  // 🔥 yt-dlp command
-  const command = `yt-dlp -f best -g "${url}"`;
-
-  exec(command, (error, stdout, stderr) => {
-    if (error) {
-      console.log("ERROR:", stderr);
+    if (!url) {
       return res.json({ status: false });
     }
 
-    const videoUrl = stdout.trim();
-
-    if (!videoUrl) {
-      return res.json({ status: false });
-    }
-
-    res.json({
-      status: true,
-      url: videoUrl
+    const result = await youtubedl(url, {
+      getUrl: true,
+      format: "best"
     });
-  });
+
+    return res.json({
+      status: true,
+      url: result
+    });
+
+  } catch (err) {
+    console.log(err);
+    return res.json({ status: false });
+  }
 });
 
 app.listen(3000, () => console.log("Server running 🚀"));
