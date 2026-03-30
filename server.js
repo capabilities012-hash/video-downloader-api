@@ -1,63 +1,46 @@
 const express = require("express");
 const cors = require("cors");
-const ytdl = require("ytdl-core");
-const axios = require("axios");
+const { exec } = require("child_process");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 app.get("/", (req, res) => {
-    res.send("API RUNNING 🚀");
+    res.send("API WORKING 🚀");
 });
 
-// 🔥 MAIN API
-app.post("/api/download", async (req, res) => {
-    try {
-        const { url } = req.body;
+app.post("/api/download", (req, res) => {
 
-        if (!url) {
-            return res.json({ status: false, msg: "No URL" });
-        }
+    const { url } = req.body;
 
-        // 🔥 Instagram FIX
-        if (url.includes("instagram.com")) {
-
-            const apiUrl = `https://snapinsta.app/action.php`;
-
-            const response = await axios.post(apiUrl,
-                new URLSearchParams({
-                    url: url
-                }),
-                {
-                    headers: {
-                        "content-type": "application/x-www-form-urlencoded"
-                    }
-                }
-            );
-
-            const html = response.data;
-
-            const match = html.match(/href="(https:\/\/[^"]+\.mp4[^"]*)"/);
-
-            if (match) {
-                return res.json({
-                    status: true,
-                    url: match[1]
-                });
-            } else {
-                return res.json({ status: false });
-            }
-        }
-
-        return res.json({ status: false });
-
-    } catch (err) {
-        return res.json({
-            status: false,
-            error: err.message
-        });
+    if (!url) {
+        return res.json({ status: false, msg: "No URL" });
     }
+
+    // 🔥 yt-dlp command
+    const command = `yt-dlp -f best -g "${url}"`;
+
+    exec(command, (error, stdout, stderr) => {
+
+        if (error) {
+            return res.json({
+                status: false,
+                error: stderr
+            });
+        }
+
+        const videoUrl = stdout.trim();
+
+        if (!videoUrl) {
+            return res.json({ status: false });
+        }
+
+        return res.json({
+            status: true,
+            url: videoUrl
+        });
+    });
 });
 
 const PORT = process.env.PORT || 3000;
