@@ -7,40 +7,37 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/", (req, res) => {
-    res.send("API WORKING 🚀");
+  res.send("API WORKING 🚀");
 });
 
-app.post("/api/download", (req, res) => {
+// ✅ MAIN API
+app.post("/api", (req, res) => {
+  const url = req.body.url;
 
-    const { url } = req.body;
+  if (!url) {
+    return res.json({ status: false, msg: "No URL" });
+  }
 
-    if (!url) {
-        return res.json({ status: false, msg: "No URL" });
+  // 🔥 yt-dlp command
+  const command = `yt-dlp -f best -g "${url}"`;
+
+  exec(command, (error, stdout, stderr) => {
+    if (error) {
+      console.log("ERROR:", stderr);
+      return res.json({ status: false });
     }
 
-    // 🔥 UPDATED COMMAND (IMPORTANT)
-    const command = `yt-dlp -f "best[ext=mp4]" --no-warnings --no-playlist -g "${url}"`;
+    const videoUrl = stdout.trim();
 
-    exec(command, (error, stdout, stderr) => {
+    if (!videoUrl) {
+      return res.json({ status: false });
+    }
 
-        console.log("STDOUT:", stdout);
-        console.log("ERROR:", stderr);
-
-        if (error || !stdout) {
-            return res.json({
-                status: false,
-                error: stderr || "No video found"
-            });
-        }
-
-        const videoUrl = stdout.split("\n")[0].trim();
-
-        return res.json({
-            status: true,
-            url: videoUrl
-        });
+    res.json({
+      status: true,
+      url: videoUrl
     });
+  });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Server running"));
+app.listen(3000, () => console.log("Server running 🚀"));
