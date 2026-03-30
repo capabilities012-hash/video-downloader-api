@@ -15,7 +15,7 @@ app.post("/api", async (req, res) => {
     const { url } = req.body;
 
     if (!url) {
-      return res.json({ status: false });
+      return res.json({ status: false, msg: "No URL" });
     }
 
     const result = await youtubedl(url, {
@@ -23,15 +23,15 @@ app.post("/api", async (req, res) => {
       format: "best"
     });
 
-    return res.json({
+    res.json({
       status: true,
       url: result
     });
 
-  } catch (err) {
-    console.log(err);
-    return res.json({ status: false });
+  } catch (e) {
+    console.log(e);
+    res.json({ status: false, msg: "Error" });
   }
 });
 
-app.listen(3000, () => console.log("Server running 🚀"));
+app.listen(3000, () => console.log("Server running"));
