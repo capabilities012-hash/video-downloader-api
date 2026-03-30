@@ -18,23 +18,22 @@ app.post("/api/download", (req, res) => {
         return res.json({ status: false, msg: "No URL" });
     }
 
-    // 🔥 yt-dlp command
-    const command = `yt-dlp -f best -g "${url}"`;
+    // 🔥 UPDATED COMMAND (IMPORTANT)
+    const command = `yt-dlp -f "best[ext=mp4]" --no-warnings --no-playlist -g "${url}"`;
 
     exec(command, (error, stdout, stderr) => {
 
-        if (error) {
+        console.log("STDOUT:", stdout);
+        console.log("ERROR:", stderr);
+
+        if (error || !stdout) {
             return res.json({
                 status: false,
-                error: stderr
+                error: stderr || "No video found"
             });
         }
 
-        const videoUrl = stdout.trim();
-
-        if (!videoUrl) {
-            return res.json({ status: false });
-        }
+        const videoUrl = stdout.split("\n")[0].trim();
 
         return res.json({
             status: true,
